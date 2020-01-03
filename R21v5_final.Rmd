@@ -10,7 +10,12 @@ output:
 ## R Markdown
 
 When you click the **Knit** (â‡§âŒ˜K) button a document will be generated that includes the output in the document. 
+
+
 ```{r setup, include=FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE) 
+
 # loading packages
 pacman::p_load(readr,dplyr, reshape2, psych, Hmisc, ggplot2, tidyr, ggrepel, ggpubr)
 
