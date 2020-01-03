@@ -1,0 +1,343 @@
+---
+title: "R21"
+author: "Reed"
+date: "February 23, 2017"
+output: "html_document"
+#Dani reads on April 10th 2018
+#Choose your working directory on line 14 or 15
+---
+
+```{r}
+# loading packages
+pacman::p_load(readr,dplyr, reshape2, psych, Hmisc, ggplot2, tidyr, ggrepel, ggpubr)
+
+setwd("C:/Users/clin/Dropbox/R21 Jennifer project/100.  R21 manuscript/Data_script_upload")
+#setwd("C:/Users/reed/Documents/My Dropbox/R21 Jennifer project/100.  R21 manuscript/Data_script_upload")
+
+#Read in the data 
+All <- read_csv("data.clean.march.21.csv",  col_types = cols(Biopsy.Date = col_date(format = "%m/%d/%Y"),   Biopsy.Time = col_datetime(format = "%H:%M"), DBIntensity6 = col_number(), DBIntensity8 = col_number(), DOB = col_date(format = "%m/%d/%Y"), Date.taste = col_date(format = "%m/%d/%Y"), MiliQH2OIntensity9 = col_number(), NaClIntensity3 = col_number(), NaClIntensity7 = col_number(), PTCIntensity12 = col_number(), PTCIntensity4 = col_number(), QuinineIntensity10 = col_number(), Race = col_factor(levels = c("1",  "2", "3", "4", "5", "6", "7",  "9")), Sex = col_factor(levels = c("M", "F")), SucroseIntensity11 = col_number(), SucroseIntensity5 = col_number(), testing.age = col_number()))
+All$general_type <- All$sample.type
+```
+
+
+#Supplemental Table 1
+```{r Make Supplemental Table 1}
+cols <- c("subjectid", "Sex", "Race", "testing.age","TAS2R38_Diplotype" )
+Table1S <- All[,cols]
+str(Table1S)
+Table1S <- Table1S[!duplicated(Table1S$subjectid),]
+str(Table1S)
+table(Table1S$Sex)
+table(Table1S$Race)
+colnames(Table1S) <- c("Subject Id", "Sex", "Race", "Age", "TAS2R38 Diplotype")
+write.csv(Table1S, file="Table1S.csv", row.names=F)
+Table1S
+```
+
+
+#Supplemental Table 2
+```{r Make Supplemental Table 2}
+cols1 <- c("subjectid", "Nasal_RIN", "FP_RIN", "NasalBiopsy_Method")
+Table2S <- All[, cols1]
+Table2S <- Table2S[!duplicated(Table2S$subjectid),]
+Table2S <- Table2S[,c(1,3,2,4)]
+# sort by Nasal_RIN
+Table2S1 <-Table2S[order(Table2S$Nasal_RIN),]
+Table2S1[Table2S1 == 0] <- "<1.0"
+#write the final table
+write.csv(Table2S1,"Table2S.csv", row.names = F)
+#do some stats
+Table2S1
+
+```
+
+
+#Supplemental Table 3
+```{r}
+Table3S <- read.table("RNAseq_targets.txt", sep="\t", header=TRUE)
+Table3S1 <- Table3S[Table3S$Gene.Name %in% c( "TRPM5","GNAT3", "TAS2R38"),]
+colnames(Table3S1) <- c("Gene Name",	"Gene Id",	"FUN-1341",	"FUN-1342",	"FUN-1344",	"FUN-17",	"FUN-22",	"FUN-9")
+
+Table3S1[,3:8] <- round(Table3S1[,3:8], 2)
+write.csv(Table3S1, file="Table3S.csv", row.names = F)
+Table3S1
+
+```
+
+#Supplemental Table 5
+```{r}
+cols2 <- c("TAS2R38_Diplotype","subjectid", "MilliQWaterFlavor1", "MiliQH2OFlavor9", "QuinineFlavor2","QuinineFlavor10","NaClFlavor3","NaClFlavor7","PTCFlavor4", "PTCFlavor12", "SucroseFlavor5", "SucroseFlavor11", "DBFlavor6","DBFlavor8")
+Table5S <- All[, cols2]
+Table5S <- Table5S[!duplicated(Table5S$subjectid),]
+colnames(Table5S) <- c("Diplotype", "Identifier", "Wat 1", "Wat 2", "Quin 1", "Quin 2", "NaCl 1", "NaCl 2", "PTC 1", "PTC 2", "Suc 1", "Suc 2", "DB 1", "DB 2")
+Table5S[Table5S =="No Flavor"] <- "No"
+#write the final table
+write.csv(Table5S, file = "Table5S.csv", row.names = F)
+Table5S
+
+```
+
+#Supplemental Figure 1
+
+```{r Supplemental Figure 1}
+
+FigS1.tif <- ggplot(Table2S, aes(Nasal_RIN, FP_RIN)) +geom_point()+  geom_text_repel(label=Table2S$subjectid) + geom_point() + xlab("Nasal RIN")+geom_smooth(method='lm')+ ylab("Fungiform RIN") + theme_bw()
+FigS1.tif
+
+postscript(colormodel="cmyk")
+ggsave(filename ='S1Figurev5.tif', FigS1.tif, width = 16.93, height = 10.85, units ="cm",dpi = 1200, device='tiff', limitsize = TRUE, compression = "lzw")
+dev.off()
+       
+```
+
+```{r RIN stats and correlation}
+#median for Nasal vs FP
+median <- summary(Table2S[,c("FP_RIN", "Nasal_RIN")])
+median
+cor <- cor(Table2S[,c("FP_RIN", "Nasal_RIN")], use="complete.obs", method="spearman") 
+cor
+cor_stats <- rcorr(as.matrix(Table2S[, c("FP_RIN", "Nasal_RIN")], type="spearman"))
+cor_stats
+#Brush vs Biop
+#Need to subset by Brush and Biopsy
+
+Brush <- Table2S[which(Table2S$NasalBiopsy_Method == "Nasal Brush"),]
+Biopsy <- Table2S[which(Table2S$NasalBiopsy_Method == "Nasal Biopsy"),]
+
+median_brush <- summary(Brush$Nasal_RIN)
+median_biopsy <- summary(Biopsy$Nasal_RIN)
+
+##t-test Nasal RIN vs. FP RIN
+paired_t <- t.test(Table2S$Nasal_RIN, Table2S$FP_RIN, paired=TRUE) 
+paired_t
+
+```
+
+
+##Supplemental Figure 3 correlation between qPCR and RNAseq for FP
+```{r}
+tas2r38.taste <- subset(All, target.name == "tas2r38.taste")
+cols3 <- c("subjectid", "sample.type", "reporter", "target.name", "TAS2R38_Diplotype", "median.all.as40", "gapdh.median.40", "CafScore_Num180mgDrinksperMonth")
+tas2r38.taste <- tas2r38.taste[, cols3]
+
+tas2r38.taste_FP <- subset(tas2r38.taste, sample.type == "FP")
+
+CT <-tas2r38.taste_FP[tas2r38.taste_FP$subjectid %in% c("FUN-1341","FUN-1342","FUN-9","FUN-17","FUN-1344","FUN-22"),]
+
+RNAseq <- read.table("RNAseq_targets.txt", sep="\t", header=TRUE)
+RNASeq1 <- RNAseq[RNAseq$Gene.Name %in% "TAS2R38",]
+RNAseq2 <-RNASeq1[,-c(1:2)]
+row.names(RNAseq2)<-NULL
+RNAseq2[RNAseq2 == 0] <- 0.00000001
+RNAseqTas2r38 <-RNAseq2
+
+dat<-CT[c(1,7)]
+dat$value<-t(RNAseqTas2r38)
+colnames(dat) <-c("ID", "CT", "value")
+
+
+fit <-lm(value ~ CT, data = dat)
+p1<-ggplot(dat, aes(x=CT, y=value))  + geom_smooth(method ="lm") +
+  geom_point(aes(x=CT, y=value, shape=ID))+xlab("TAS2R38, qPCR")+ylab("TAS2R38, RNASeq, RPKM")+
+   labs(shape="Subject")
+ 
+p4=p1 + theme_minimal() + scale_y_continuous(trans='log10')+scale_x_continuous(trans='log10')
+p4
+
+postscript(colormodel="cmyk")  
+ggsave(filename ='S3Figurev5.tif', p4, width = 15.85, height = 9.5, units ="cm",dpi = 1200, device='tiff', limitsize = TRUE, compression = "lzw")
+dev.off()    
+
+rcorr(as.matrix(dat[,c(2:3)]), type="spearman")
+```
+
+
+#Figure 3
+```{r PTC by genotype}
+cols <- c("subjectid", "TAS2R38_Diplotype", "PTCIntensity4", "PTCIntensity12", "target.name", "gapdh.median.40", "general_type")
+Taste <- unique(subset(All[, cols], target.name == "tas2r38.taste"))
+# limit by good subject #drop #13 and #21
+Taste1 <- Taste[Taste$subjectid %in% c("FUN-27", "FUN-31", "FUN-1346", "FUN-22", "FUN-26", "FUN-1347"), ]
+#make file even smaller
+cols2 <- c("subjectid", "PTCIntensity4", "PTCIntensity12", "gapdh.median.40", "general_type")
+Taste2 <- Taste1[, cols2]
+Taste2$PTCmean <- rowMeans(Taste2[, 2:3], na.rm=TRUE)
+cols3 <- c("subjectid", "gapdh.median.40", "general_type", "PTCmean")
+Taste3 <- Taste2[, cols3]
+Taste_FP <- subset(Taste3, general_type == "FP")
+Taste_Nasal <- subset(Taste3, general_type != "FP")
+Taste_final <- merge(Taste_FP, Taste_Nasal, by.x = "subjectid", by.y = "subjectid", all = TRUE)
+
+g7 <- ggplot(Taste_final, aes(x=gapdh.median.40.x, PTCmean.x)) + geom_point() + geom_text_repel(label=Taste_final$subjectid) + scale_x_log10() + geom_smooth(method='lm') + theme_bw() + xlab(" Fungiform, TAS2R38-PAV mRNA") + ylab("PTC taste intensity ratings")
+
+g8 <- ggplot(Taste_final, aes(x=gapdh.median.40.y, PTCmean.x)) + geom_point() + geom_text_repel(label=Taste_final$subjectid) + scale_x_log10() +
+geom_smooth(method='lm') + theme_bw() + xlab("Nasal, TAS2R38-PAV mRNA") + ylab("PTC taste intensity ratings")
+
+g9 <- ggplot(Taste_final, aes(x=gapdh.median.40.x, gapdh.median.40.y)) + geom_point() + scale_y_log10()+ geom_text_repel(label=Taste_final$subjectid) + scale_x_log10() + geom_smooth(method='lm') + theme_bw() + xlab(" Fungiform, TAS2R38-PAV mRNA") + ylab("Nasal, TAS2R38-PAV mRNA")
+
+cor17_FP <- cor(Taste_final[, c("gapdh.median.40.x", "PTCmean.x")], use="complete.obs", method="spearman") 
+cor17_FP
+
+cor18_FP <- rcorr(as.matrix(Taste_final[, c("gapdh.median.40.x", "PTCmean.x")]), type="spearman") 
+cor18_FP
+
+cor19_Nasal <- cor(Taste_final[, c("gapdh.median.40.y", "PTCmean.x")], use="complete.obs", method="spearman") 
+cor19_Nasal
+
+cor20_Nasal <- rcorr(as.matrix(Taste_final[, c("gapdh.median.40.y", "PTCmean.x")]), type="spearman")
+cor20_Nasal
+
+cor22_Nasal_FP <- rcorr(as.matrix(Taste_final[, c("gapdh.median.40.y", "gapdh.median.40.x")]), type="spearman") 
+cor22_Nasal_FP
+
+
+postscript(colormodel="cmyk")
+x <-ggarrange(g9, g7, g8, 
+          labels = c("A", "B", "C"), label.x = 0.95, label.y = 0.15, ncol = 1, nrow = 3)
+
+ggsave(filename ='Figure3v5.tif', x, width = 13.12, height = 18.41, units ="cm",dpi = 1200, device='tiff', limitsize = TRUE, compression = "lzw")
+dev.off()
+```
+
+
+#Supplemental Figure 2
+```{r plot with all subjects even those with no GNAT3}
+
+# limit by subjects meeting criteria
+Taste1 <- Taste[Taste$subjectid %in% c("FUN-27", "FUN-31", "FUN-1346", "FUN-22", "FUN-26", "FUN-1347", "FUN-13", "FUN-21", "FUN-1340", "FUN-1342", "FUN-1349", "FUN-18", "FUN-16", "FUN-34",  "FUN-9" ,  "FUN-4",  "FUN-12",  "FUN-1335",  "FUN-1343" ), ]
+#make file even smaller
+cols2 <- c("subjectid", "PTCIntensity4", "PTCIntensity12", "gapdh.median.40", "general_type")
+Taste2 <- Taste1[, cols2]
+Taste2$PTCmean <- rowMeans(Taste2[, 2:3], na.rm=TRUE)
+cols3 <- c("subjectid", "gapdh.median.40", "general_type", "PTCmean")
+Taste3 <- Taste2[, cols3]
+Taste_FP <- subset(Taste3, general_type == "FP")
+Taste_Nasal <- subset(Taste3, general_type != "FP")
+Taste_final <- merge(Taste_FP, Taste_Nasal, by.x = "subjectid", by.y = "subjectid", all = TRUE)
+
+g7 <- ggplot(Taste_final, aes(x=gapdh.median.40.x, PTCmean.x)) + geom_point() + geom_text_repel(label=Taste_final$subjectid) + scale_x_log10() + geom_smooth(method='lm') + theme_bw() + xlab("Fungiform, TAS2R38-PAV mRNA") + ylab("PTC taste intensity ratings")
+
+g8 <- ggplot(Taste_final, aes(x=gapdh.median.40.y, PTCmean.x)) + geom_point() + geom_text_repel(label=Taste_final$subjectid) + scale_x_log10() + geom_smooth(method='lm') + theme_bw() + xlab("Nasal, TAS2R38-PAV mRNA") + ylab("PTC taste intensity ratings")
+
+g9 <- ggplot(Taste_final, aes(x=gapdh.median.40.x, gapdh.median.40.y)) + geom_point() +scale_y_log10()+ geom_text_repel(label=Taste_final$subjectid) + scale_x_log10() + geom_smooth(method='lm') + theme_bw() + xlab(" Fungiform, TAS2R38-PAV mRNA") + ylab("Nasal, TAS2R38-PAV mRNA")
+
+
+cor17_FP <- cor(Taste_final[, c("gapdh.median.40.x", "PTCmean.x")], use="complete.obs", method="spearman") 
+cor17_FP
+
+cor18_FP <- rcorr(as.matrix(Taste_final[, c("gapdh.median.40.x", "PTCmean.x")]), type="spearman") 
+cor18_FP 
+
+cor19_Nasal <- cor(Taste_final[, c("gapdh.median.40.y", "PTCmean.x")], use="complete.obs", method="spearman") 
+cor19_Nasal
+
+cor20_Nasal <- rcorr(as.matrix(Taste_final[, c("gapdh.median.40.y", "PTCmean.x")]), type="spearman")
+cor20_Nasal
+
+cor21_Nasal <- cor(Taste_final[, c("gapdh.median.40.y", "gapdh.median.40.x")], use="complete.obs", method="spearman") 
+cor21_Nasal
+
+cor22_Nasal_FP <- rcorr(as.matrix(Taste_final[, c("gapdh.median.40.y", "gapdh.median.40.x")]), type="spearman") 
+cor22_Nasal_FP
+
+postscript(colormodel="cmyk")
+y<-ggarrange(g9, g7, g8, 
+          labels = c("A", "B", "C"), label.x = 0.95, label.y = 0.15, ncol = 1, nrow = 3)
+
+ggsave(filename ='S2Figurev5.tif', y, width = 12.09, height = 18.47, units ="cm",dpi = 1200, device='tiff', limitsize = TRUE, compression = "lzw")
+dev.off()
+```
+
+
+##Supplemental Figure 4
+```{r PTC taste in general}
+cols <- c(49, 65)
+All$PTCmean <- rowMeans(All[, cols], na.rm=TRUE)
+#Cut down the file
+Figure2 <- unique(All[, c("subjectid", "TAS2R38_Diplotype", "PTCmean", "CafScore_Num180mgDrinksperMonth")])
+
+#Make genotype a factor
+Figure2$TAS2R38_Diplotype <- as.factor(Figure2$TAS2R38_Diplotype)
+g9 <- ggplot(Figure2, aes(x=TAS2R38_Diplotype, y=PTCmean)) + theme_bw() + xlab("TAS2R38") + ylab("PTC intensity rating") + geom_jitter(position=position_jitter(0.2), shape=1, cex=3.2) + stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="red")
+g9
+
+postscript(colormodel="cmyk")
+ggsave(filename ='S4Figurev5.tif', g9, width = 13.15, height = 9.45, units ="cm",dpi = 1200, device='tiff', limitsize = TRUE, compression = "lzw")
+dev.off()
+```
+
+
+##Supplemental Table 4
+#water 
+```{r Water}
+cols <- c("subjectid", "MilliQWaterIntensity1", "MiliQH2OIntensity9", "TAS2R38_Diplotype")
+Water <- subset(All[, cols])
+Water <- unique(Water)
+#take the mean of both PTC measures
+Water$mean <- rowMeans(Water[, 2:3], na.rm=TRUE)
+fitwater <- aov(mean ~ TAS2R38_Diplotype, data=Water)
+summary(fitwater)
+capture.output(summary(fitwater),file="Waterstats.doc")
+Water1 <- aggregate(Water[, 5], list(Water$TAS2R38_Diplotype), mean)
+Water1
+#lots of people rating water as non-zero
+```
+#Sucrose
+```{r Sucrose}
+cols <- c("subjectid", "SucroseIntensity5", "SucroseIntensity11", "TAS2R38_Diplotype")
+Sucrose <- subset(All[, cols])
+Sucrose <- unique(Sucrose)
+#take the mean of both PTC measures
+Sucrose$mean <- rowMeans(Sucrose[, 2:3], na.rm=TRUE)
+
+fitSucrose <- aov(mean ~ TAS2R38_Diplotype, data=Sucrose)
+summary(fitSucrose)
+capture.output(summary(fitSucrose),file="Sucrosestats.doc")
+Sucrose1 <- aggregate(Sucrose[, 5], list(Sucrose$TAS2R38_Diplotype), mean)
+Sucrose1
+```
+#Denatonium Benzoate - bitter
+```{r now DB}
+cols <- c("subjectid", "DBIntensity6", "DBIntensity8", "TAS2R38_Diplotype")
+DB <- subset(All[, cols])
+DB <- unique(DB)
+#take the mean of both PTC measures
+DB$mean <- rowMeans(DB[, 2:3], na.rm=TRUE)
+
+fitDB <- aov(mean ~ TAS2R38_Diplotype, data=DB)
+summary(fitDB)
+
+capture.output(summary(fitDB),file="DBstats.doc")
+DB1 <- aggregate(DB[, 5], list(DB$TAS2R38_Diplotype), mean)
+DB1
+```
+#Quinine - bitter
+```{r Quinine}
+cols <- c("subjectid", "QuinineIntensity2", "QuinineIntensity10", "TAS2R38_Diplotype")
+Quinine <- subset(All[, cols])
+Quinine <- unique(Quinine)
+#take the mean of both PTC measures
+Quinine$mean <- rowMeans(Quinine[, 2:3], na.rm=TRUE)
+
+fitQuinine <- aov(mean ~ TAS2R38_Diplotype, data=Quinine)
+summary(fitQuinine)
+capture.output(summary(fitQuinine),file="Quininestats.doc")
+Quinine1 <- aggregate(Quinine[, 5], list(Quinine$TAS2R38_Diplotype), mean)
+Quinine1
+```
+#Sodium chloride - salty
+```{r Salty}
+cols <- c("subjectid", "NaClIntensity3", "NaClIntensity7", "TAS2R38_Diplotype")
+Salt <- subset(All[, cols])
+Salt <- unique(Salt)
+#take the mean of both PTC measures
+Salt$mean <- rowMeans(Salt[, 2:3], na.rm=TRUE)
+
+fitSalt <- aov(mean ~ TAS2R38_Diplotype, data=Salt)
+summary(fitSalt)
+capture.output(summary(fitSalt),file="Saltstats.doc")
+Salt1 <- aggregate(Salt[, 5], list(Salt$TAS2R38_Diplotype), mean)
+Salt1
+```
+
+
