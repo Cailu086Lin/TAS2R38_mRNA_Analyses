@@ -24,7 +24,7 @@ All <- read_csv("data.clean.march.21.csv",  col_types = cols(Biopsy.Date = col_d
 All$general_type <- All$sample.type
 ```
 #Supplemental Table 1
-```{r setup, include=FALSE}
+```{r table, include=FALSE}
 cols <- c("subjectid", "Sex", "Race", "testing.age","TAS2R38_Diplotype" )
 Table1S <- All[,cols]
 str(Table1S)
@@ -39,7 +39,7 @@ Table1S
 
 
 #Supplemental Table 2
-```{r setup, include=FALSE}
+```{r table, include=FALSE}
 cols1 <- c("subjectid", "Nasal_RIN", "FP_RIN", "NasalBiopsy_Method")
 Table2S <- All[, cols1]
 Table2S <- Table2S[!duplicated(Table2S$subjectid),]
@@ -56,7 +56,7 @@ Table2S1
 
 
 #Supplemental Table 3
-```{r setup, include=FALSE}
+```{r table, include=FALSE}
 Table3S <- read.table("RNAseq_targets.txt", sep="\t", header=TRUE)
 Table3S1 <- Table3S[Table3S$Gene.Name %in% c( "TRPM5","GNAT3", "TAS2R38"),]
 colnames(Table3S1) <- c("Gene Name",	"Gene Id",	"FUN-1341",	"FUN-1342",	"FUN-1344",	"FUN-17",	"FUN-22",	"FUN-9")
@@ -68,7 +68,7 @@ Table3S1
 ```
 
 #Supplemental Table 5
-```{r}
+```{r table, include=FALSE}
 cols2 <- c("TAS2R38_Diplotype","subjectid", "MilliQWaterFlavor1", "MiliQH2OFlavor9", "QuinineFlavor2","QuinineFlavor10","NaClFlavor3","NaClFlavor7","PTCFlavor4", "PTCFlavor12", "SucroseFlavor5", "SucroseFlavor11", "DBFlavor6","DBFlavor8")
 Table5S <- All[, cols2]
 Table5S <- Table5S[!duplicated(Table5S$subjectid),]
@@ -82,7 +82,7 @@ Table5S
 
 #Supplemental Figure 1
 
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 
 FigS1.tif <- ggplot(Table2S, aes(Nasal_RIN, FP_RIN)) +geom_point()+  geom_text_repel(label=Table2S$subjectid) + geom_point() + xlab("Nasal RIN")+geom_smooth(method='lm')+ ylab("Fungiform RIN") + theme_bw()
 FigS1.tif
@@ -93,7 +93,7 @@ dev.off()
        
 ```
 
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 #median for Nasal vs FP
 median <- summary(Table2S[,c("FP_RIN", "Nasal_RIN")])
 median
@@ -118,7 +118,7 @@ paired_t
 
 
 ##Supplemental Figure 3 correlation between qPCR and RNAseq for FP
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 tas2r38.taste <- subset(All, target.name == "tas2r38.taste")
 cols3 <- c("subjectid", "sample.type", "reporter", "target.name", "TAS2R38_Diplotype", "median.all.as40", "gapdh.median.40", "CafScore_Num180mgDrinksperMonth")
 tas2r38.taste <- tas2r38.taste[, cols3]
@@ -156,7 +156,7 @@ rcorr(as.matrix(dat[,c(2:3)]), type="spearman")
 
 
 #Figure 3 PTC by genotype
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 cols <- c("subjectid", "TAS2R38_Diplotype", "PTCIntensity4", "PTCIntensity12", "target.name", "gapdh.median.40", "general_type")
 Taste <- unique(subset(All[, cols], target.name == "tas2r38.taste"))
 # limit by good subject #drop #13 and #21
@@ -204,8 +204,7 @@ dev.off()
 
 
 #Supplemental Figure 2 plot with all subjects even those with no GNAT3
-```{r setup, include=FALSE}
-
+```{r figure, include=FALSE}
 # limit by subjects meeting criteria
 Taste1 <- Taste[Taste$subjectid %in% c("FUN-27", "FUN-31", "FUN-1346", "FUN-22", "FUN-26", "FUN-1347", "FUN-13", "FUN-21", "FUN-1340", "FUN-1342", "FUN-1349", "FUN-18", "FUN-16", "FUN-34",  "FUN-9" ,  "FUN-4",  "FUN-12",  "FUN-1335",  "FUN-1343" ), ]
 #make file even smaller
@@ -253,7 +252,7 @@ dev.off()
 
 
 ##Supplemental Figure 4  PTC taste in general
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 cols <- c(49, 65)
 All$PTCmean <- rowMeans(All[, cols], na.rm=TRUE)
 #Cut down the file
@@ -271,8 +270,7 @@ dev.off()
 
 
 ##Supplemental Table 4  Water
-#water 
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 cols <- c("subjectid", "MilliQWaterIntensity1", "MiliQH2OIntensity9", "TAS2R38_Diplotype")
 Water <- subset(All[, cols])
 Water <- unique(Water)
@@ -286,7 +284,7 @@ Water1
 #lots of people rating water as non-zero
 ```
 #Sucrose
-```{r Sucrose}
+```{r figure, include=FALSE}
 cols <- c("subjectid", "SucroseIntensity5", "SucroseIntensity11", "TAS2R38_Diplotype")
 Sucrose <- subset(All[, cols])
 Sucrose <- unique(Sucrose)
@@ -300,7 +298,7 @@ Sucrose1 <- aggregate(Sucrose[, 5], list(Sucrose$TAS2R38_Diplotype), mean)
 Sucrose1
 ```
 #Denatonium Benzoate - bitter
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 cols <- c("subjectid", "DBIntensity6", "DBIntensity8", "TAS2R38_Diplotype")
 DB <- subset(All[, cols])
 DB <- unique(DB)
@@ -315,7 +313,7 @@ DB1 <- aggregate(DB[, 5], list(DB$TAS2R38_Diplotype), mean)
 DB1
 ```
 #Quinine - bitter
-```{r  setup, include=FALSE}
+```{r figure, include=FALSE}
 cols <- c("subjectid", "QuinineIntensity2", "QuinineIntensity10", "TAS2R38_Diplotype")
 Quinine <- subset(All[, cols])
 Quinine <- unique(Quinine)
@@ -329,7 +327,7 @@ Quinine1 <- aggregate(Quinine[, 5], list(Quinine$TAS2R38_Diplotype), mean)
 Quinine1
 ```
 #Sodium chloride - salty
-```{r setup, include=FALSE}
+```{r figure, include=FALSE}
 cols <- c("subjectid", "NaClIntensity3", "NaClIntensity7", "TAS2R38_Diplotype")
 Salt <- subset(All[, cols])
 Salt <- unique(Salt)
