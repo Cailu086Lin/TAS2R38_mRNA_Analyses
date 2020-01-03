@@ -3,10 +3,11 @@ title: "R21"
 author: "Reed"
 date: "February 23, 2017"
 output: "html_document"
-#Dani reads on April 10th 2018
-#Choose your working directory on line 14 or 15
----
 
+---
+## R Markdown
+
+When you click the **Knit** (â‡§âŒ˜K) button a document will be generated that includes the output in the document. 
 ```{r}
 # loading packages
 pacman::p_load(readr,dplyr, reshape2, psych, Hmisc, ggplot2, tidyr, ggrepel, ggpubr)
