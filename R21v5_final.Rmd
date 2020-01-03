@@ -8,14 +8,11 @@ output:
 ---
 
 ## R Markdown
-
 When you click the **Knit** (â‡§âŒ˜K) button a document will be generated that includes the output in the document. 
-
-
-```{r setup, include=FALSE}
 require(knitr)
 knitr::opts_chunk$set(echo = TRUE) 
 
+```{r input, include=FALSE, echo=FALSE}
 # loading packages
 pacman::p_load(readr,dplyr, reshape2, psych, Hmisc, ggplot2, tidyr, ggrepel, ggpubr)
 
@@ -26,8 +23,6 @@ setwd("C:/Users/clin/Dropbox/R21 Jennifer project/100.  R21 manuscript/Data_scri
 All <- read_csv("data.clean.march.21.csv",  col_types = cols(Biopsy.Date = col_date(format = "%m/%d/%Y"),   Biopsy.Time = col_datetime(format = "%H:%M"), DBIntensity6 = col_number(), DBIntensity8 = col_number(), DOB = col_date(format = "%m/%d/%Y"), Date.taste = col_date(format = "%m/%d/%Y"), MiliQH2OIntensity9 = col_number(), NaClIntensity3 = col_number(), NaClIntensity7 = col_number(), PTCIntensity12 = col_number(), PTCIntensity4 = col_number(), QuinineIntensity10 = col_number(), Race = col_factor(levels = c("1",  "2", "3", "4", "5", "6", "7",  "9")), Sex = col_factor(levels = c("M", "F")), SucroseIntensity11 = col_number(), SucroseIntensity5 = col_number(), testing.age = col_number()))
 All$general_type <- All$sample.type
 ```
-
-
 #Supplemental Table 1
 ```{r setup, include=FALSE}
 cols <- c("subjectid", "Sex", "Race", "testing.age","TAS2R38_Diplotype" )
