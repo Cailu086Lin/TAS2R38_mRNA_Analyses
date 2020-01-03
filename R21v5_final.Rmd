@@ -1,6 +1,6 @@
 ---
 title: "R21"
-author: "Cailu LIn"
+author: "Cailu Lin"
 date: "February 23, 2017"
 output: 
   html_document:
